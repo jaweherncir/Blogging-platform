@@ -17,9 +17,28 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, "password obligatoir"],
-    minlength: [3, "min 3 caracteres"],
-    maxlength: [10, "max 6 caratcteres"],
-  }
+ 
+  },
+  lastname:{
+    type: String,
+   default: ' anonyme',
+  },
+  Contact:{
+    type: String,
+    default: ' 00 216 20 113 786',
+  },
+  dateBrth:{
+    type: Date,
+    default: Date.now,
+  },
+  Gender:{
+    type: String,
+    default: 'homme',
+  },
+  City:{
+    type: String,
+    default: 'Tunis',
+  },
 });
 
 

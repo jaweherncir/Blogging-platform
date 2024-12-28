@@ -3,9 +3,8 @@ const mongoose = require("mongoose");
 const PostSchema = new mongoose.Schema({
     titrePost: {
         type: String,
-        required: [true, "The title of the post is required"],
-        trim: true,
-        minlength: [1, "The title cannot be empty"],
+       default: "My Post",
+      
     },
     content: {
         type: String,
@@ -21,13 +20,14 @@ const PostSchema = new mongoose.Schema({
         ref: "User",
         required: [true, "The user who created the post is required"],
     },
+    like: { type: Boolean, default: false },
     avis: [
         {
             user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
             comment: { type: String, trim: true },
-            rating: { type: Number, min: 1, max: 5 },
             date: { type: Date, default: Date.now },
         },
+       
     ],
 });
 

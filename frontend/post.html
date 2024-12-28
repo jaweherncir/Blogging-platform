@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Design</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .navbar {
+            width: 100%;
+        }
+        .input-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        .post-container {
+            width: 100%;
+            max-width: 600px;
+        }
+        .post-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .t-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            background: #fff;
+        }
+        .top-icons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .like-icon, .dislike-icon {
+            cursor: pointer;
+        }
+        .like-icon.liked {
+            color: rgb(55, 255, 0); /* Change heart color */
+            animation: heartBeat 0.5s infinite;
+        }
+        .dislike-icon.liked {
+            color: rgb(255, 0, 0); /* Change heart color */
+            animation: heartBeat 0.5s infinite;
+        }
+        @keyframes heartBeat {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <p class="text-white mb-0">Welcome</p>
+            <div class="user-info">
+                <button id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav><br>
+
+    <!-- Input for new post -->
+    <div class="input-container">
+        <div class="input-group mb-3">
+            <input id="new-post-content" type="text" class="form-control" placeholder="Write something..." aria-label="Add new post..." aria-describedby="basic-addon2">
+            <div class="input-group-append">
+                <button id="publish-post-btn" class="btn btn-outline-secondary" type="button">Publish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts -->
+    <div class="post-container">
+        <div id="post-list" class="post-list">
+            <!-- Dynamic posts will appear here -->
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const logoutButton = document.getElementById("logout-btn");
+
+    logoutButton.addEventListener("click", async function () {
+        try {
+            const response = await fetch("http://localhost:5000/api/users/logout", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Clear localStorage and redirect to login/signup page
+                localStorage.removeItem('userId');
+                document.cookie = "auth_token=; path=/; secure; sameSite=strict; max-age=0";
+                window.location.href = "login.html"; // Redirect to login/signup page
+            } else {
+                alert(result.message);
+                console.error("Error:", result.message);
+            }
+        } catch (error) {
+            alert("An error occurred during logout.");
+            console.error("Error logging out:", error);
+        }
+    });
+            const postList = document.getElementById("post-list");
+            const publishButton = document.getElementById("publish-post-btn");
+            const postContentInput = document.getElementById("new-post-content");
+
+            function getUserIdFromCookies() {
+                const cookies = document.cookie.split('; ');
+                const authTokenCookie = cookies.find(cookie => cookie.startsWith('auth_token='));
+                if (authTokenCookie) {
+                    const token = authTokenCookie.split('=')[1];
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        if (payload && payload.userId) {
+                            return payload.userId;
+                        } else {
+                            console.error("Token payload does not contain userId.");
+                            return null;
+                        }
+                    } catch (e) {
+                        console.error("Error decoding token:", e);
+                        return null;
+                    }
+                }
+                console.error("auth_token cookie is missing.");
+                return null;
+            }
+
+            const userId = getUserIdFromCookies();
+
+            // Fetch posts from the API
+            fetch("http://localhost:5000/api/posts/getAllPosts")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.posts && data.posts.length > 0) {
+                        data.posts.forEach(post => createPostCard(post));
+                    } else {
+                        postList.innerHTML = "<p>No posts available.</p>";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching posts:", error);
+                    postList.innerHTML = "<p>Error fetching posts. Please try again later.</p>";
+                });
+
+            // Add new post
+            publishButton.addEventListener("click", async function () {
+                const content = postContentInput.value.trim();
+                if (!content) {
+                    Swal.fire('Error', 'Content cannot be empty', 'error');
+                    return;
+                }
+                try {
+                    if (!userId) {
+                        Swal.fire('Error', 'User session expired. Please log in again.', 'error');
+                        return;
+                    }
+                    const response = await fetch("http://localhost:5000/api/posts/addPost", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ content, userId }),
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        Swal.fire('Success', 'Post published successfully', 'success');
+                        postContentInput.value = ""; // Clear input field
+                        createPostCard(result.post, true); // Add new post
+                    } else {
+                        Swal.fire('Error', result.message, 'error');
+                    }
+                } catch (error) {
+                    console.error("Error publishing post:", error);
+                    Swal.fire('Error', 'An unexpected error occurred', 'error');
+                }
+            });
+
+            // Function to create a post card
+            function createPostCard(post, prepend = false) {
+                const postCard = document.createElement("div");
+                postCard.classList.add("t-card");
+                postCard.dataset.id = post._id;
+
+                postCard.innerHTML = `
+                    <div class="top-icons">
+                        <button class="icon-btn edit-icon" aria-label="Edit">
+                            <i class="fa fa-pencil"></i>
+                        </button>
+                        <button class="icon-btn close-icon delete-icon" aria-label="Delete" data-id="${post._id}">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <h6>${post.user?.username || "Anonymous"}</h6>
+                    <p>${post.content || "No content available"}</p>
+                    <div class="post-footer">
+                        <span class="post-date">${new Date(post.datePosted).toLocaleDateString()}</span>
+                        <span class="like-icon${post.likes > 0 ? ' liked' : ''}" data-id="${post._id}"><i class="fa-solid fa-thumbs-up"></i></span>
+                        <span class="dislike-icon${post.likes <= 0 ? ' liked' : ''}" data-id="${post._id}"><i class="fa-solid fa-thumbs-down"></i></span>
+                    </div>
+                `;
+
+                const editButton = postCard.querySelector(".edit-icon");
+                editButton.addEventListener("click", function () {
+                    const postId = post._id;
+                    const postContent = post.content;
+
+                    Swal.fire({
+                        title: 'Edit Post',
+                        input: 'text',
+                        inputValue: postContent,
+                        showCancelButton: true,
+                        confirmButtonText: 'Save',
+                        cancelButtonText: 'Cancel',
+                        inputValidator: (value) => !value && 'Content cannot be empty',
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            const updatedContent = result.value;
+                            try {
+                                const response = await fetch(`http://localhost:5000/api/posts/updatePost/${postId}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ content: updatedContent }),
+                                });
+
+                                if (response.ok) {
+                                    Swal.fire('Success', 'Post updated successfully', 'success');
+                                    postCard.querySelector("p").textContent = updatedContent;
+                                } else {
+                                    const result = await response.json();
+                                    Swal.fire('Error', result.message, 'error');
+                                }
+                            } catch (error) {
+                                console.error("Error updating post:", error);
+                                Swal.fire('Error', 'An unexpected error occurred', 'error');
+                            }
+                        }
+                    });
+                });
+
+                const deleteButton = postCard.querySelector(".delete-icon");
+                deleteButton.addEventListener("click", async function () {
+                    const postId = post._id;
+                    try {
+                        const response = await fetch(`http://localhost:5000/api/posts/deletePost/${postId}`, { method: "DELETE" });
+                        if (response.ok) {
+                            Swal.fire('Success', 'Post deleted successfully', 'success');
+                            postCard.remove();
+                        } else {
+                            const result = await response.json();
+                            Swal.fire('Error', result.message, 'error');
+                        }
+                    } catch (error) {
+                        console.error("Error deleting post:", error);
+                        Swal.fire('Error', 'An unexpected error occurred', 'error');
+                    }
+                });
+
+                const likeIcon = postCard.querySelector(".like-icon");
+                likeIcon.addEventListener("click", async function () {
+                    const postId = post._id;
+                    try {
+                        const response = await fetch(`http://localhost:5000/api/posts/likePost/${postId}`, { method: "POST" });
+                        const result = await response.json();
+                        if (response.ok) {
+                            Swal.fire('Success', result.message, 'success');
+                            likeIcon.classList.add("liked");
+                            dislikeIcon.classList.remove("liked");
+                        } else {
+                            Swal.fire('Error', result.message, 'error');
+                        }
+                    } catch (error) {
+                        console.error("Error liking post:", error);
+                        Swal.fire('Error', 'An unexpected error occurred', 'error');
+                    }
+                });
+
+                const dislikeIcon = postCard.querySelector(".dislike-icon");
+                dislikeIcon.addEventListener("click", async function () {
+                    const postId = post._id;
+                    try {
+                        const response = await fetch(`http://localhost:5000/api/posts/dislikePost/${postId}`, { method: "POST" });
+                        const result = await response.json();
+                        if (response.ok) {
+                            Swal.fire('Success', result.message, 'success');
+                            dislikeIcon.classList.add("liked");
+                            likeIcon.classList.remove("liked");
+                        } else {
+                            Swal.fire('Error', result.message, 'error');
+                        }
+                    } catch (error) {
+                        console.error("Error disliking post:", error);
+                        Swal.fire('Error', 'An unexpected error occurred', 'error');
+                    }
+                });
+
+                if (prepend) {
+                    postList.prepend(postCard);
+                } else {
+                    postList.append(postCard);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+/* Basic styling for the post container */
+.post-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+/* Styling the post title */
+.post-title {
+    margin-bottom: 10px;
+    font-size: 24px;
+    color: #333;
+}
+
+/* Styling the post content */
+.post-content {
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #555;
+}
+
+/* Styling the post footer */
+.post-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #777;
+}
+
+/* Author and date styling */
+.post-author,
+.post-date {
+    margin: 0;
+}
+
+/* Like icon and comment input section */
+.post-interactions {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.like-icon {
+    font-size: 24px;
+    cursor: pointer;
+    margin-right: 10px;
+    color: #fc0000;
+}
+
+.comment-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+}
+
+.comment-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.comment-list li {
+    padding: 5px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #555;
+}
+.t-card {
+    position: relative;
+    background-color: #fff; /* Adjust if needed */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Container for icons */
+.top-icons {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px; /* Space between icons */
+}
+
+/* Style for the buttons */
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Close icon styling */
+.close-icon {
+    color: #ff5e57;
+}
+
+.close-icon:hover {
+    color: #ff3b3b;
+}
+
+/* Edit icon styling */
+.edit-icon {
+    color: #007bff;
+}
+
+.edit-icon:hover {
+    color: #0056b3;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-name {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    background-color: green;
+    border-radius: 50%;
+    display: inline-block;
+}
+
